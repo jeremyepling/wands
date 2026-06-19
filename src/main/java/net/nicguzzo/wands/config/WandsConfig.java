@@ -66,6 +66,7 @@ public class WandsConfig {
     public ExtraTool_def[] extra_shovels = {};
     public ExtraTool_def[] extra_hoes = {};
     public ExtraTool_def[] extra_shears = {};
+    public String[] extra_multi_tools = {};
     //TODO: change to TAGS for extra tools?
     //static public TagKey<Item> extra_pickaxes_tag;
     static public List<ExtraTool> extra_pickaxes_list = new ArrayList<ExtraTool>();
@@ -73,6 +74,7 @@ public class WandsConfig {
     static public List<ExtraTool> extra_shovels_list = new ArrayList<ExtraTool>();
     static public List<ExtraTool> extra_hoes_list = new ArrayList<ExtraTool>();
     static public List<ExtraTool> extra_shears_list = new ArrayList<ExtraTool>();
+    static public List<Item> extra_multi_tools_list = new ArrayList<Item>();
     static public int max_limit = 8192;
     public int max_limit___increment_this_if_your_machine_can_handle_it = max_limit;
     public float blocks_per_xp = def_blocks_per_xp;
@@ -258,6 +260,27 @@ public class WandsConfig {
         }
     }
 
+    public void generate_multi_tools_list() {
+        for (String id : extra_multi_tools) {
+            RcId rcid = RcId.tryParse(id);
+            if (rcid != null) {
+                //? if >= 1.21.11 {
+                BuiltInRegistries.ITEM.get(rcid.id()).map(itemReference -> {
+                    extra_multi_tools_list.add(itemReference.value());
+                    return null;
+                });
+                //? } else {
+
+                /*Item item = BuiltInRegistries.ITEM.get(rcid.id());
+                if (item != null && item != Items.AIR) {
+                    extra_multi_tools_list.add(item);
+                }
+
+                *///? }
+            }
+        }
+    }
+
     public void parse_colors() {
         c_block_outline = parse_color(block_outline_color);
         c_bounding_box = parse_color(bounding_box_color);
@@ -278,6 +301,7 @@ public class WandsConfig {
         generate_extra_tool(extra_shovels_list,extra_shovels);
         generate_extra_tool(extra_hoes_list,extra_hoes);
         generate_extra_tool(extra_shears_list,extra_shears);
+        generate_multi_tools_list();
 
         System.out.println("generating allow/deny lists");
         generate_allow_list(pickaxe_allowed, str_pickaxe_allowed);

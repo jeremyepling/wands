@@ -201,8 +201,10 @@ Building Wands respects claimed/protected chunks. Players cannot use wands to bu
 - Per-wand block limits and durability
 - `blocks_per_xp` — XP cost per block (0 = disabled, 2 = 2 blocks per XP point, 0.5 = 2 XP per block)
 - Block denylists (`str_denied`)
-- Extra tool definitions (`extra_pickaxes`, `extra_axes`, `extra_shovels`, `extra_hoes`, `extra_shears`)
+- Extra tool definitions (`extra_pickaxes`, `extra_axes`, `extra_shovels`, `extra_hoes`, `extra_shears`, `extra_multi_tools`)
 - Feature toggles (`enable_vein_mode`, `enable_blast_mode`, `disable_destroy_replace`)
+
+For mod authors and modpack makers: see [COMPATIBILITY.md](COMPATIBILITY.md) for integration details including item tags, multi-tool support, and chunk claim compatibility.
 
 ### Client config (via Cloth Config / Mod Menu)
 

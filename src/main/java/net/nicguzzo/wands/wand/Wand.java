@@ -30,9 +30,11 @@ import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.stats.Stats;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -78,7 +80,7 @@ import java.util.function.Consumer;
 //TODO lava and powder snow bucket retreive when enough empty buckets and space in inv
 //TODO fix mirroring and rotation
 //TODO augmentation items, durability, range, damage?, planting?
-//TODO support other mods tools
+//TODO support other mods tools (multi_tools tag + extra_multi_tools config partially addresses this)
 //TODO infinite (creative) wand recipe, optional
 //TODO drop items on wand merge craft
 //TODO fix plants place, force samestate, needs air bug
@@ -87,6 +89,15 @@ import java.util.function.Consumer;
 //TODO banner placement not working on sides
 
 public class Wand {
+    // Multi-tool support: items are detected as multi-tools if they match 3+ vanilla tool tags
+    // (pickaxes/axes/shovels/hoes), are in the wands:multi_tools item tag, or are listed in the
+    // extra_multi_tools config. Multi-tools count as all tool types for destroy, replace, and use.
+    // Energy/mana safety: can_dig() sets correct_tool=true for multi-tools so the only gate is
+    // getDestroySpeed() > 1.0f — all known energy mods (Mekanism, Thermal, Tinkers', etc.) drop
+    // speed to <=1.0f when depleted, so drained tools are rejected without consuming resources.
+    // The entry guard also bypasses the instanceof DiggerItem check (pre-1.20.5) since most mod
+    // multi-tools extend Item directly, not vanilla tool classes.
+    static final TagKey<Item> MULTI_TOOLS_TAG = TagKey.create(Registries.ITEM, RcId.fromNamespaceAndPath("wands", "multi_tools").id());
     private static final int TOOL_DAMAGE_STOP = 5;
     public int x = 0;
     public int y = 0;
@@ -133,7 +144,8 @@ public class Wand {
         AXE,
         SHOVEL,
         HOE,
-        SHEAR
+        SHEAR,
+        MULTI
     }
 
     static class WandTool {
@@ -1643,25 +1655,40 @@ public class Wand {
             if (tool_item.isEmpty()) continue;
             tools[slot].empty = false;
             Item item = tool_item.getItem();
-            if (tool_item.is(ItemTags.PICKAXES) || WandsConfig.extra_pickaxes_list.contains(item)) {
+            int tag_count = 0;
+            if (tool_item.is(ItemTags.PICKAXES)) tag_count++;
+            if (tool_item.is(ItemTags.HOES)) tag_count++;
+            if (tool_item.is(ItemTags.SHOVELS)) tag_count++;
+            if (tool_item.is(ItemTags.AXES)) tag_count++;
+
+            if (tool_item.is(MULTI_TOOLS_TAG) || WandsConfig.extra_multi_tools_list.contains(item) || tag_count >= 3) {
                 has_pickaxe = true;
-                tools[slot].tooltype = ToolType.PICKAXE;
-            }
-            if (tool_item.is(ItemTags.HOES) || WandsConfig.extra_hoes_list.contains(item)) {
                 has_hoe = true;
-                tools[slot].tooltype = ToolType.HOE;
-            }
-            if (tool_item.is(ItemTags.SHOVELS) || WandsConfig.extra_shovels_list.contains(item)) {
                 has_shovel = true;
-                tools[slot].tooltype = ToolType.SHOVEL;
-            }
-            if (tool_item.is(ItemTags.AXES) || WandsConfig.extra_axes_list.contains(item)) {
                 has_axe = true;
-                tools[slot].tooltype = ToolType.AXE;
-            }
-            if (item instanceof ShearsItem || WandsConfig.extra_shears_list.contains(item)) {
                 has_shear = true;
-                tools[slot].tooltype = ToolType.SHEAR;
+                tools[slot].tooltype = ToolType.MULTI;
+            } else {
+                if (tool_item.is(ItemTags.PICKAXES) || WandsConfig.extra_pickaxes_list.contains(item)) {
+                    has_pickaxe = true;
+                    tools[slot].tooltype = ToolType.PICKAXE;
+                }
+                if (tool_item.is(ItemTags.HOES) || WandsConfig.extra_hoes_list.contains(item)) {
+                    has_hoe = true;
+                    tools[slot].tooltype = ToolType.HOE;
+                }
+                if (tool_item.is(ItemTags.SHOVELS) || WandsConfig.extra_shovels_list.contains(item)) {
+                    has_shovel = true;
+                    tools[slot].tooltype = ToolType.SHOVEL;
+                }
+                if (tool_item.is(ItemTags.AXES) || WandsConfig.extra_axes_list.contains(item)) {
+                    has_axe = true;
+                    tools[slot].tooltype = ToolType.AXE;
+                }
+                if (item instanceof ShearsItem || WandsConfig.extra_shears_list.contains(item)) {
+                    has_shear = true;
+                    tools[slot].tooltype = ToolType.SHEAR;
+                }
             }
             n_tools++;
         }
@@ -1674,8 +1701,9 @@ public class Wand {
         for (int i = 0; i < tools.length; i++) {
             if (!tools[i].empty && tools[i] != null) {
                 if (!tool_would_break(tools[i].tool)) {
-                    if (((destroy || replace || _needs_replace) && can_dig(state, check_speed, tools[i].tool)) ||
+                    if (((destroy || replace || _needs_replace) && can_dig(state, check_speed, tools[i].tool, tools[i].tooltype)) ||
                             ((use) && (
+                                    (tools[i].tooltype == ToolType.MULTI && (WandUtils.is_tillable(state) || WandUtils.can_axe_use(state) || WandUtils.is_flattenable(state) || can_shear(state))) ||
                                     (tools[i].tooltype == ToolType.HOE && WandUtils.is_tillable(state)) ||
                                     (tools[i].tooltype == ToolType.AXE && WandUtils.can_axe_use(state)) ||
                                     (tools[i].tooltype == ToolType.SHOVEL && WandUtils.is_flattenable(state)) ||
@@ -1694,7 +1722,7 @@ public class Wand {
         return false;
     }
 
-    boolean can_dig(BlockState state, boolean check_speed, ItemStack digger) {
+    boolean can_dig(BlockState state, boolean check_speed, ItemStack digger, ToolType tooltype) {
         if (digger == null) {
             return false;
         }
@@ -1715,27 +1743,27 @@ public class Wand {
         //?}else{
           /*boolean is_tool=item_digger instanceof DiggerItem ;
         *///?}
-        if ( !digger.isEmpty() && (is_tool || item_digger instanceof ShearsItem)) {
+        if ( !digger.isEmpty() && (is_tool || item_digger instanceof ShearsItem || tooltype == ToolType.MULTI)) {
             boolean is_allowed = false;
             boolean minable = false;
-            if (item_digger instanceof ShearsItem) {
+            if (tooltype == ToolType.MULTI) {
+                can_shear = can_shear(state);
+                is_allowed = WandsConfig.pickaxe_allowed.contains(blk)
+                        || WandsConfig.axe_allowed.contains(blk)
+                        || WandsConfig.shovel_allowed.contains(blk)
+                        || WandsConfig.hoe_allowed.contains(blk)
+                        || WandsConfig.shears_allowed.contains(blk);
+            } else if (item_digger instanceof ShearsItem) {
                 can_shear = can_shear(state);
                 is_allowed = WandsConfig.shears_allowed.contains(blk);
+            } else if (item_digger instanceof AxeItem) {
+                is_allowed = WandsConfig.axe_allowed.contains(blk);
+            } else if (item_digger instanceof ShovelItem) {
+                is_allowed = WandsConfig.shovel_allowed.contains(blk);
+            } else if (item_digger instanceof HoeItem) {
+                is_allowed = WandsConfig.hoe_allowed.contains(blk);
             } else {
-                if (item_digger instanceof AxeItem) {
-                    is_allowed = WandsConfig.axe_allowed.contains(blk);
-                } else {
-                    if (item_digger instanceof ShovelItem) {
-                        is_allowed = WandsConfig.shovel_allowed.contains(blk);
-                    } else {
-                        if (item_digger instanceof HoeItem) {
-                            is_allowed = WandsConfig.hoe_allowed.contains(blk);
-                        }else{
-                            //TODO: find a new way to check if it's a pickaxe
-                            is_allowed = WandsConfig.pickaxe_allowed.contains(blk);
-                        }
-                    }
-                }
+                is_allowed = WandsConfig.pickaxe_allowed.contains(blk);
             }
             if (check_speed) {
                 float destroy_speed = item_digger.getDestroySpeed(digger, state);
@@ -1747,6 +1775,9 @@ public class Wand {
                     //?}else{
                     /*correct_tool = item_digger.isCorrectToolForDrops(state);
                     *///?}
+                }
+                if (tooltype == ToolType.MULTI) {
+                    correct_tool = true;
                 }
                 return creative || (destroy_speed > 1.0f && correct_tool)
                         || is_glass || is_snow_layer || is_allowed || can_shear;
