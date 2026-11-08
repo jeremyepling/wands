@@ -9,7 +9,9 @@ fun prop(name: String, consumer: (prop: String) -> Unit) {
         ?.let(consumer)
 }
 
-val minecraft = property("deps.minecraft") as String;
+val minecraft = property("deps.minecraft") as String
+val modVersionStr = "3.2.1"
+val releaseChannel = project.findProperty("release_channel") as? String ?: "release"
 
 sourceSets {
     main {
@@ -28,6 +30,15 @@ repositories {
     maven("https://maven.jamieswhiteshirt.com/libs-release/") {
         content {
             includeGroup("com.jamieswhiteshirt")
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jspecify" && requested.name == "jspecify") {
+            useVersion("1.0.0")
+            because("satisfy strict constraint of minecraft-dependencies")
         }
     }
 }
@@ -98,7 +109,7 @@ modstitch {
     metadata {
         modId = "wands"
         modName = "BuildingWands"
-        modVersion = "3.1.0"
+        modVersion = modVersionStr
         modGroup = "net.nicguzzo"
         modAuthor = "Nicguzzo"
 
@@ -110,12 +121,15 @@ modstitch {
             // You can put any other replacement properties/metadata here that
             // modstitch doesn't initially support. Some examples below.
             put("mod_issue_tracker", "https://github.com/nicguzzo/deepslateinstamine/issues")
+            put("cloth_config_version", property("cloth_config_version").toString())
 
             put("minecraft_version_range", when (property("deps.minecraft")) {
                 "1.20.1" -> "[1.20.1,)"
                 "1.21.1" -> "[1.21.1,)"
                 "1.21.11" -> "[1.21.11,)"
                 "26.1.2" -> "[26.1.2,)"
+                "26.2" -> "[26.2,)"
+                "26.3" -> "[26.3,)"
                 else -> throw IllegalArgumentException("Please set mc range version for ${property("deps.minecraft")} in build.gradle.kts")
             })
             put("forge_version_range", when (property("deps.minecraft")) {
@@ -123,14 +137,18 @@ modstitch {
                 "1.21.1" -> ""
                 "1.21.11" -> ""
                 "26.1.2" -> ""
+                "26.2" -> ""
+                "26.3" -> ""
                 else -> throw IllegalArgumentException("Please set forge version for ${property("deps.minecraft")} in build.gradle.kts")
             })
 
             put("pack_format", when (property("deps.minecraft")) {
                 "1.20.1" -> 15
                 "1.21.1" -> 34
-                "1.21.11" -> 69
-                "26.1.2" -> 14
+                "1.21.11" -> 75
+                "26.1.2" -> 84
+                "26.2" -> 88
+                "26.3" -> 97
                 else -> throw IllegalArgumentException("Please store the resource pack version for ${property("deps.minecraft")} in build.gradle.kts! https://minecraft.wiki/w/Pack_format")
             }.toString())
         }
@@ -147,6 +165,9 @@ modstitch {
             runs {
                 all {
                     programArgs("--width", "1920", "--height", "1080")
+                    if (stonecutter.eval(stonecutter.current.version, ">=26.3")) {
+                        programArgs("--graphicsBackend", "vulkan")
+                    }
                 }
             }
         }
@@ -158,6 +179,7 @@ modstitch {
 
             if (sc.current.parsed eq "1.21.1") { neoFormVersion = "1.21.1-20240808.144430" }
             else if (sc.current.parsed eq "26.1.2") { neoFormVersion = "26.1.2-1" }
+            else if (sc.current.parsed eq "26.3") { neoFormVersion = "26.3-1" }
 
             neoForgeVersion = "${property("deps.neoforge")}"
         } else
@@ -287,5 +309,33 @@ publishMods {
         projectId.set("XkisZUfp")
         accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
         minecraftVersions.add(property("deps.minecraft") as String)
+    }
+}
+
+base {
+    val loader = when {
+        modstitch.isLoom -> "fabric"
+        modstitch.isModDevGradleRegular -> "neoforge"
+        else -> "forge"
+    }
+    archivesName.set("BuildingWands_${modVersionStr}_${releaseChannel}_${loader}_${minecraft}")
+}
+
+tasks.withType<org.gradle.jvm.tasks.Jar> {
+    archiveVersion.set("")
+}
+
+tasks.matching { it.name == "runClient" }.configureEach {
+    doFirst {
+        val optionsFile = project.file("run/options.txt")
+        if (optionsFile.exists()) {
+            val text = optionsFile.readText()
+            if (text.contains("startedCleanly:false") || text.contains("preferredGraphicsBackend:\"opengl\"")) {
+                optionsFile.writeText(
+                    text.replace("startedCleanly:false", "startedCleanly:true")
+                        .replace("preferredGraphicsBackend:\"opengl\"", "preferredGraphicsBackend:\"default\"")
+                )
+            }
+        }
     }
 }

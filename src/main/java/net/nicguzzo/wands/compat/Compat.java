@@ -2,12 +2,12 @@ package net.nicguzzo.wands.compat;
 
 //?if<1.21.11{
 
-// import com.mojang.blaze3d.systems.RenderSystem;
-// import net.minecraft.client.gui.screens.Screen;
-//?}
+ /*import com.mojang.blaze3d.systems.RenderSystem;
+ import net.minecraft.client.gui.screens.Screen;
+*///?}
 //?if<=1.21.11{
-//import net.minecraft.client.resources.model.ModelBakery;
-//?}
+/*import net.minecraft.client.resources.model.ModelBakery;
+*///?}
 //?if>26.1{
 //?if fabric {
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
@@ -343,9 +343,9 @@ public class Compat {
     static public BlockPos get_player_pos(Player player){
         return player.getOnPos();
     }
-    static public Vec3 get_player_pos_center(Player player) {
-        return player.getOnPos().getCenter();
-    }
+    //static public Vec3 get_player_pos_center(Player player) {
+    //    return player.getOnPos().getCenter();
+    //}
     static public boolean is_same(ItemStack i1,ItemStack i2){
         return ItemStack.isSameItem(i1,i2);
     }
@@ -376,12 +376,12 @@ public class Compat {
         //? }
     }
     static public void toast(Toast toast){
-        //? if >= 1.21.6 {
+        //? if >= 26.2 {
+        /*Minecraft.getInstance().gui.toastManager().addToast(toast);
+        *///? } else if >= 1.21.6 {
         Minecraft.getInstance().getToastManager().addToast(toast);
         //? } else {
-
         /*Minecraft.getInstance().getToasts().addToast(toast);
-
         *///? }
     }
     static public CompoundTag ItemStack_save(ItemStack item, Level level){
@@ -834,4 +834,17 @@ public class Compat {
     public static final int HIGH_CONTRAST_DIAMOND = -11010079;
     public static final int COSMOS_PINK = -13108;
     public static final int TEXT_GRAY = -2039584;
+    //?if < 26.3 {
+    public static final int KEY_ESCAPE = org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+    //?} else {
+    /*public static final int KEY_ESCAPE = com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE;
+    *///?}
+
+    public static boolean isKeyDown(long window, int keyCode) {
+        //?if < 26.3 {
+        return org.lwjgl.glfw.GLFW.glfwGetKey(window, keyCode) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        //?} else {
+        /*return com.mojang.blaze3d.platform.InputConstants.isKeyDown(keyCode);
+        *///?}
+    }
 }
