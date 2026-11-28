@@ -50,7 +50,8 @@ public class PasteMode extends WandMode {
                 checkPos.set(px, py, pz);
                 BlockState existing = wand.level.getBlockState(checkPos);
                 if (wand.destroy) {
-                    if (existing.isAir()) {
+                    // Removing a waterlogged block can leave its fluid behind.
+                    if (existing.isAir() || existing == existing.getFluidState().createLegacyBlock()) {
                         continue;
                     }
                 } else {
