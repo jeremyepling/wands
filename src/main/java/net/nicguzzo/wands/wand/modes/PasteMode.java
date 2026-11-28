@@ -45,21 +45,21 @@ public class PasteMode extends WandMode {
             int pz = b_pos.getZ() + p.getZ() * mz;
             st = wand.rotate_mirror(st, mirroraxis);
 
-            // Skip blocks that are already placed in the world (unless destroying)
-            if (!wand.destroy && wand.level != null) {
+            // Completed positions should not take up slots in the next paste batch.
+            if (wand.level != null) {
                 checkPos.set(px, py, pz);
                 BlockState existing = wand.level.getBlockState(checkPos);
-                if (!wand.palette.has_palette) {
-                    if (existing.equals(st)) {
+                if (wand.destroy) {
+                    if (existing.isAir()) {
                         continue;
                     }
                 } else {
-                    if (!existing.isAir() && !wand.replace && wand.replace_mode != 2 && !wand.can_place(existing, checkPos)) {
+                    if (!wand.palette.has_palette && existing.equals(st)) {
                         continue;
                     }
-                }
-                if (!wand.replace && wand.replace_mode != 2 && !wand.can_place(existing, checkPos)) {
-                    continue;
+                    if (!wand.replace && wand.replace_mode != 2 && !wand.can_place(existing, checkPos)) {
+                        continue;
+                    }
                 }
             }
 
