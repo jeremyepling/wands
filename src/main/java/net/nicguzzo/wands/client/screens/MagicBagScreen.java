@@ -1,6 +1,6 @@
 package net.nicguzzo.wands.client.screens;
 
-//?if >= 12.11.1 {
+//?if >= 12.11.1 && < 26.4-pre-2 {
 //?if < 26.3 {
 import com.mojang.blaze3d.textures.GpuTexture;
 //?} else {
@@ -29,12 +29,12 @@ public class MagicBagScreen extends AbstractContainerScreen<MagicBagMenu> {
     Item bag_item=null;
     MagicBagItem.MagicBagItemTier tier= MagicBagItem.MagicBagItemTier.MAGIC_BAG_TIER_1;
     List<Component> help;
-    //?if >= 12.11.1 {
+    //?if >= 12.11.1 && < 26.4-pre-2 {
     GpuTexture magicbag_Texture;
     //?}
     public MagicBagScreen(MagicBagMenu abstractContainerMenu, Inventory inventory, Component component) {
         super(abstractContainerMenu, inventory, component);
-        //?if >= 12.11.1 {
+        //?if >= 12.11.1 && < 26.4-pre-2 {
         TextureManager textureManager = Minecraft.getInstance().getTextureManager();
         magicbag_Texture = textureManager.getTexture(TEXTURE.id()).getTexture();
         //?}
@@ -55,7 +55,11 @@ public class MagicBagScreen extends AbstractContainerScreen<MagicBagMenu> {
         );
     }
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int i, int j, float f) {
+    //?}
     //?}else{
 
     /*@Override
@@ -70,8 +74,15 @@ public class MagicBagScreen extends AbstractContainerScreen<MagicBagMenu> {
         //gui.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, x+100, y+33, 256-16, 16*tier.ordinal(), 16, 16, 256, 256);
     }
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractContents(GuiGraphicsExtractor gui) {
+        super.extractContents(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.extractContents(gui, mouseX, mouseY, delta);
+    //?}
     //?}else{
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.render(gui, mouseX, mouseY, delta);

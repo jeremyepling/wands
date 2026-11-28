@@ -356,7 +356,13 @@ public class BlueprintCarouselScreen extends Screen {
 
     @Override
     //?if >= 26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
+    //?}
     //?} else {
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
     *///?}

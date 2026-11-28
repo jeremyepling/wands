@@ -19,7 +19,5 @@
     }
   },
   "breaks": ${claim_version_breaks},
-  "depends": {
-    "cloth-config": ">=${cloth_config_version}"
-  }
+  "depends": ${fabric_dependencies}
 }

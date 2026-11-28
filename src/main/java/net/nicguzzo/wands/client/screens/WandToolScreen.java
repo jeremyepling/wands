@@ -11,7 +11,9 @@ import com.mojang.blaze3d.textures.GpuTextureView;
 /*import com.mojang.renderpearl.api.textures.GpuTextureView;
 *///?}
 import net.minecraft.client.input.KeyEvent;
+//?if < 26.4-pre-2 {
 import net.minecraft.client.renderer.texture.TextureManager;
+//?}
 //?}
 
 import net.minecraft.network.chat.Component;
@@ -35,7 +37,9 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
 
     //?if >= 1.21.11{
     int[] empty_tools = new int[0];
+    //?if < 26.4-pre-2 {
     GpuTextureView wandInventoryTexture;
+    //?}
     //?}
     private static final RcId INV_TEX = RcId.fromNamespaceAndPath(WandsMod.MOD_ID, "textures/gui/inventory.png");
 
@@ -43,19 +47,26 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
     //?if < 26.3 {
     private static long handCursor = 0;
     //?}
+    //?if < 26.4-pre-2 {
     private boolean isHandCursor = false;
+    //?}
 
     public WandToolScreen(WandToolsMenu handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
-    //?if >= 1.21.11{
+    //?if >= 1.21.11 && < 26.4-pre-2 {
         TextureManager textureManager = Minecraft.getInstance().getTextureManager();
         wandInventoryTexture = textureManager.getTexture(INV_TEX.id()).getTextureView();
     //?}
     }
 
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        super.extractBackground(gui);
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
         super.extractBackground(gui, mouseX, mouseY, delta);
+    //?}
     //?}else{
     /*@Override
     protected void renderBg(@NotNull GuiGraphicsExtractor gui, float delta, int mouseX, int mouseY) {
@@ -75,8 +86,15 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
 
     @Override
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractContents(GuiGraphicsExtractor gui) {
+        super.extractContents(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.extractContents(gui, mouseX, mouseY, delta);
+    //?}
     //?}else{
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.render(gui, mouseX, mouseY, delta);
@@ -105,6 +123,11 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
 
         // Hand cursor over inventory slots
         boolean shouldBeHand = isOverInventorySlot(mouseX, mouseY);
+        //?if >= 26.4-pre-2 {
+        /*if (shouldBeHand) {
+            gui.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.POINTING_HAND);
+        }
+        *///?} else {
         if (shouldBeHand != isHandCursor) {
             isHandCursor = shouldBeHand;
             //?if < 26.3 {
@@ -125,6 +148,7 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
             }
             *///?}
         }
+        //?}
         //?if <26.1
         //this.renderTooltip(gui, mouseX, mouseY);
     }
@@ -152,7 +176,7 @@ public class WandToolScreen extends AbstractContainerScreen<WandToolsMenu> {
             GLFW.glfwDestroyCursor(handCursor);
             handCursor = 0;
         }
-        //?} else {
+        //?} else if < 26.4-pre-2 {
         /*if (isHandCursor) {
             com.mojang.blaze3d.platform.cursor.CursorTypes.ARROW.select();
             isHandCursor = false;

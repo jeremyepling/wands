@@ -79,7 +79,7 @@ public class BlueprintMenu extends AbstractContainerMenu {
         // Replacement ghost slots (slots 0..3) aligned with the 4 visible rows in BlueprintScreen
         for (int r = 0; r < VISIBLE_ROWS; r++) {
             final int row = r;
-            this.addSlot(new Slot(this.replacementInventory, r, 145, 28 + r * 20) {
+            this.addSlot(new WandSlot(this.replacementInventory, r, 145, 28 + r * 20) {
                 @Override
                 public boolean isActive() {
                     return row < BlueprintMenu.this.rowCount;
@@ -92,12 +92,12 @@ public class BlueprintMenu extends AbstractContainerMenu {
         // Player inventory (slots 4..30, inventory indices 9..35)
         for (o = 0; o < 3; ++o) {
             for (n = 0; n < 9; ++n) {
-                this.addSlot(new Slot(playerInventory, n + o * 9 + 9, 8 + n * 18, 128 + o * 18));
+                this.addSlot(new WandSlot(playerInventory, n + o * 9 + 9, 8 + n * 18, 128 + o * 18));
             }
         }
         // Hotbar (slots 31..39, inventory indices 0..8)
         for (o = 0; o < 9; ++o) {
-            this.addSlot(new Slot(playerInventory, o, 8 + o * 18, 186));
+            this.addSlot(new WandSlot(playerInventory, o, 8 + o * 18, 186));
         }
     }
 

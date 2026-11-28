@@ -2,9 +2,6 @@ package net.nicguzzo.wands.client.gui;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-//?if >= 1.21.11{
-import net.minecraft.client.renderer.RenderPipelines;
-//?}
 import net.minecraft.network.chat.Component;
 
 import net.nicguzzo.wands.compat.Compat;

@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.nicguzzo.wands.WandsMod;
@@ -229,9 +228,9 @@ public class RenderUtils {
                             float l = 1.0F;
                             float m = 1.0F;
                             if (kk != -1) {
-                                k = Mth.clamp(ff, 0.0F, 1.0F);
-                                l = Mth.clamp(gg, 0.0F, 1.0F);
-                                m = Mth.clamp(hh, 0.0F, 1.0F);
+                                k = ff;
+                                l = gg;
+                                m = hh;
                             }
                             com.mojang.blaze3d.vertex.QuadInstance qinst = new com.mojang.blaze3d.vertex.QuadInstance();
                             int a = (int)(opacity * 255.0F);
@@ -305,9 +304,9 @@ public class RenderUtils {
                                 float l = 1.0F;
                                 float m = 1.0F;
                                 if (quad.isTinted()) {
-                                    k = Mth.clamp(ff, 0.0F, 1.0F);
-                                    l = Mth.clamp(gg, 0.0F, 1.0F);
-                                    m = Mth.clamp(hh, 0.0F, 1.0F);
+                                    k = ff;
+                                    l = gg;
+                                    m = hh;
                                 }
                                 //WandsMod.log("consumer.putBulkData",false);
                                 consumer.putBulkData(matrixStack.last(), quad, k, l, m, opacity, 15728880, OverlayTexture.NO_OVERLAY);
@@ -361,9 +360,9 @@ public class RenderUtils {
                             float l;
                             float m;
                             if (quad.isTinted()) {
-                                k = Mth.clamp(ff, 0.0F, 1.0F);
-                                l = Mth.clamp(gg, 0.0F, 1.0F);
-                                m = Mth.clamp(hh, 0.0F, 1.0F);
+                                k = ff;
+                                l = gg;
+                                m = hh;
                             } else {
                                 k = 1.0F;
                                 l = 1.0F;
@@ -420,9 +419,9 @@ public class RenderUtils {
                         float g;
                         float b;
                         if (quad.isTinted()) {
-                            r = Mth.clamp(ff, 0.0F, 1.0F);
-                            g = Mth.clamp(gg, 0.0F, 1.0F);
-                            b = Mth.clamp(hh, 0.0F, 1.0F);
+                            r = ff;
+                            g = gg;
+                            b = hh;
                         } else {
                             r = 1.0F;
                             g = 1.0F;

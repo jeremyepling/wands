@@ -43,7 +43,7 @@ stonecutter {
         file("versions").listFiles().orEmpty()
             .filter { it.resolve("gradle.properties").isFile }
             .sortedBy { it.name }
-            .forEach { version(it.name, it.name.substringBeforeLast('-')) }
+            .forEach { version(it.name, it.name.substringBeforeLast('-').substringBefore("-pre-")) }
 
         // This is the default target.
         // https://stonecutter.kikugie.dev/stonecutter/guide/setup#settings-settings-gradle-kts

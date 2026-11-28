@@ -21,6 +21,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.nicguzzo.wands.client.gui.Btn;
 import net.nicguzzo.wands.client.render.ClientRender;
 import net.nicguzzo.wands.compat.Compat;
+//?if >= 26.4-pre-2 {
+/*import net.nicguzzo.wands.compat.ContainerScreenCompat;
+*///?}
 import net.nicguzzo.wands.compat.RcId;
 import net.nicguzzo.wands.items.BlueprintItem;
 import net.nicguzzo.wands.items.BlueprintItem.BlockGroup;
@@ -158,8 +161,15 @@ public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
 
     //?if >= 26.1 {
     @Override
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        super.extractBackground(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
         super.extractBackground(gui, mouseX, mouseY, delta);
+    //?}
     //?} else {
     /*@Override
     protected void renderBg(GuiGraphicsExtractor gui, float delta, int mouseX, int mouseY) {
@@ -238,8 +248,15 @@ public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
 
     //?if >= 26.1 {
     @Override
+    //?if >= 26.4-pre-2 {
+    /*public void extractContents(GuiGraphicsExtractor gui) {
+        super.extractContents(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
         super.extractContents(gui, mouseX, mouseY, delta);
+    //?}
     //?} else {
     /*@Override
     public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
@@ -300,6 +317,12 @@ public class BlueprintScreen extends AbstractContainerScreen<BlueprintMenu> {
         e -= (double) n;
         return d >= (double) (i - 1) && d < (double) (i + k + 1) && e >= (double) (j - 1) && e < (double) (j + l + 1);
     }
+
+    //?if >= 26.4-pre-2 {
+    /*private void slotClicked(Slot slot, int slotId, int button, ContainerInput input) {
+        super.slotClicked(ContainerScreenCompat.getSlotWidget(this, slot), slotId, button, input);
+    }
+    *///?}
 
     public final Slot find_slot(double d, double e) {
         for (int i = 0; i < this.menu.slots.size(); ++i) {

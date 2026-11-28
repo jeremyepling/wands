@@ -21,6 +21,9 @@ import net.nicguzzo.wands.items.PaletteItem;
 import net.nicguzzo.wands.items.PaletteItem.PaletteMode;
 import net.nicguzzo.wands.menues.PaletteMenu;
 import net.nicguzzo.wands.compat.Compat;
+//?if >= 26.4-pre-2 {
+/*import net.nicguzzo.wands.compat.ContainerScreenCompat;
+*///?}
 import net.nicguzzo.wands.networking.ClientNetworking;
 import net.nicguzzo.wands.networking.Networking;
 
@@ -119,8 +122,15 @@ public class PaletteScreen extends AbstractContainerScreen<PaletteMenu> {
 
     @Override
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractContents(GuiGraphicsExtractor gui) {
+        super.extractContents(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractContents(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.extractContents(gui, mouseX, mouseY, delta);
+    //?}
     //?}else{
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.render(gui, mouseX, mouseY, delta);
@@ -162,8 +172,13 @@ public class PaletteScreen extends AbstractContainerScreen<PaletteMenu> {
 
     //?if >=26.1 {
     @Override
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        super.extractBackground(gui);
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int i, int j, float f) {
         super.extractBackground(gui, i, j, f);
+    //?}
     //?}else{
     
     /*@Override
@@ -188,6 +203,12 @@ public class PaletteScreen extends AbstractContainerScreen<PaletteMenu> {
         e -= (double)n;
         return d >= (double)(i - 1) && d < (double)(i + k + 1) && e >= (double)(j - 1) && e < (double)(j + l + 1);
     }
+    //?if >= 26.4-pre-2 {
+    /*private void slotClicked(Slot slot, int slotId, int button, ContainerInput input) {
+        super.slotClicked(ContainerScreenCompat.getSlotWidget(this, slot), slotId, button, input);
+    }
+    *///?}
+
     public final Slot find_slot(double d, double e) {
         for(int i = 0; i < this.menu.slots.size(); ++i) {
             Slot slot = (Slot)this.menu.slots.get(i);

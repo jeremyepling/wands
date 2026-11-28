@@ -73,11 +73,11 @@ public class MagicBagMenu extends AbstractContainerMenu {
         int n;
         int k=0;
         for(o = 0; o < 9; ++o) {
-            this.addSlot(new Slot(playerInventory, k++, 8 + o * 18, 142));
+            this.addSlot(new WandSlot(playerInventory, k++, 8 + o * 18, 142));
         }
         for(o = 0; o < 3; ++o) {
             for(n = 0; n < 9; ++n) {
-                this.addSlot(new Slot(playerInventory, k++, 8 + n * 18, 84 + o * 18));
+                this.addSlot(new WandSlot(playerInventory, k++, 8 + n * 18, 84 + o * 18));
             }
         }
         this.bagcontainer = new BagContainer(1,bag,playerInventory.player.level());

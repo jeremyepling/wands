@@ -11,6 +11,15 @@ import net.fabricmc.fabric.api.client.rendering.v1.ClientTooltipComponentCallbac
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.gui.screens.MenuScreens;
+//?if >= 26.4-pre-2 {
+/*import net.minecraft.client.core.registries.BuiltInClientRegistries;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+*///?}
 
 import net.nicguzzo.wands.WandsMod;
 import net.nicguzzo.wands.client.PaletteClientTooltip;
@@ -65,19 +74,30 @@ public class WandsModClientFabric implements ClientModInitializer {
              //WandsMod.log("cli NO opac!!!!!!!!!!!!",true);
          }
 
+         //?if >= 26.4-pre-2 {
+         /*registerMenuScreen(FabricEntrypoint.WAND_TOOLS_MENU_TYPE, WandToolScreen::new);
+         registerMenuScreen(FabricEntrypoint.MAGIC_BAG_MENU_TYPE, MagicBagScreen::new);
+         registerMenuScreen(FabricEntrypoint.PALETTE_MENU_TYPE, PaletteScreen::new);
+         registerMenuScreen(FabricEntrypoint.BLUEPRINT_MENU_TYPE, BlueprintScreen::new);
+         *///?} else {
          MenuScreens.register(FabricEntrypoint.WAND_TOOLS_MENU_TYPE, WandToolScreen::new);
          MenuScreens.register(FabricEntrypoint.MAGIC_BAG_MENU_TYPE, MagicBagScreen::new);
          MenuScreens.register(FabricEntrypoint.PALETTE_MENU_TYPE, PaletteScreen::new);
          MenuScreens.register(FabricEntrypoint.BLUEPRINT_MENU_TYPE, BlueprintScreen::new);
+         //?}
          registerPackets();
          ClientTickEvents.END_CLIENT_TICK.register(WandsModClient::client_tick);
          //? if >=1.21.11{
          HudElementRegistry.attachElementBefore(
             VanillaHudElements.CHAT,
             RcId.fromNamespaceAndPath(WandsMod.MOD_ID, "custom_element_id").id(),
+            //?if >= 26.4-pre-2 {
+            /*WandsModClient::render_hud
+            *///?} else {
             (graphics, tickCounter) -> {
                 WandsModClient.render_hud(graphics);
             }
+            //?}
          );
          //?}else{
          /*HudRenderCallback.EVENT.register((e, d) -> {
@@ -85,6 +105,13 @@ public class WandsModClientFabric implements ClientModInitializer {
          });
          *///?}
     }
+
+    //?if >= 26.4-pre-2 {
+    /*private static <M extends AbstractContainerMenu, S extends Screen & MenuAccess<M>> void registerMenuScreen(
+            MenuType<M> menu, MenuScreens.ScreenConstructor<M, S> constructor) {
+        Registry.register(BuiltInClientRegistries.MENU_SCREEN, BuiltInRegistries.MENU.getKey(menu), constructor);
+    }
+    *///?}
 
     public static void registerPackets() {
         //? if >= 1.20.5 {

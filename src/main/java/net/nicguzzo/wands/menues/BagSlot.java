@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.nicguzzo.wands.items.MagicBagItem;
 
-public class BagSlot extends Slot {
+public class BagSlot extends WandSlot {
     public ItemStack bag;
     private Level level;
     public BagSlot(Container container, int i, int j, int k, ItemStack bag, Level lvl) {

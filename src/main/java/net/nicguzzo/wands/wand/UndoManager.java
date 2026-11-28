@@ -5,7 +5,6 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -58,9 +57,7 @@ public class UndoManager {
                     .append(Compat.translatable(change.mode))
                     .append(Compat.translatable("wands.history.blocks", result.applied()));
             boolean removing = (forward ? change.after : change.before).state().isAir();
-            var sound = Blocks.STONE.defaultBlockState().getSoundType();
-            level.playSound(null, player.blockPosition(), removing ? sound.getBreakSound() : sound.getPlaceSound(),
-                    SoundSource.BLOCKS, 1.0f, 1.0f);
+            Compat.playBlockSound(level, null, player.blockPosition(), Blocks.STONE.defaultBlockState(), removing);
         }
         if (result.skipped() > 0) msg.append(Compat.translatable("wands.history.skipped", result.skipped()));
         if (result.otherWorld()) msg.append(Compat.translatable("wands.history.other_world"));

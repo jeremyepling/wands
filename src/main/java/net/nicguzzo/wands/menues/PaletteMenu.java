@@ -96,7 +96,7 @@ public class PaletteMenu extends AbstractContainerMenu {
     private void addPaletteGrid(Container container, int i, int j) {
 		for (int k = 0; k < 6; k++) {
 			for (int l = 0; l < 9; l++) {
-				this.addSlot(new Slot(container, l + k * 9, i + l * 18, j + k * 18));
+				this.addSlot(new WandSlot(container, l + k * 9, i + l * 18, j + k * 18));
 			}
 		}
 	}

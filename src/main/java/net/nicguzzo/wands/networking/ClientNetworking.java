@@ -20,7 +20,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.nicguzzo.wands.WandsMod;
@@ -128,10 +127,7 @@ public class ClientNetworking {
             if (!item_stack.isEmpty()) {
                 Block block = Block.byItem(item_stack.getItem());
                 BlockState bs = block.defaultBlockState();
-                SoundType sound_type = bs.getSoundType();
-                //SoundType sound_type = ((BlockBehaviourInvoker)block).invokeGetSoundType(block.defaultBlockState());
-                SoundEvent sound = (destroy ? sound_type.getBreakSound() : sound_type.getPlaceSound());
-                Compat.player_level(player).playSound(player, pos, sound, SoundSource.BLOCKS, 1.0f, 1.0f);
+                Compat.playBlockSound(Compat.player_level(player), player, pos, bs, destroy);
             }
         }
     }

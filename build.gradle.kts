@@ -13,16 +13,16 @@ val minecraft = property("deps.minecraft") as String
 val modVersionStr = property("mod_version").toString()
 val releaseChannel = project.findProperty("release_channel") as? String ?: "release"
 
-// Fabric supplies separate resource and data pack metadata. In 1.21.11 their
-// legacy format thresholds differ and a single pack.mcmeta cannot describe both.
-if (project.name == "1.21.11-fabric") {
+// Fabric supplies separate resource and data pack metadata for these targets.
+if (project.name in setOf("1.21.11-fabric", "26.4-pre-2-fabric")) {
     tasks.named<ProcessResources>("processResources") { exclude("pack.mcmeta") }
 }
 
 sourceSets {
     main {
         resources {
-            srcDir(rootProject.file("src/resources_per_version/$minecraft/resources"))
+            val recipesVersion = if (minecraft == "26.4-pre-2") "26.3" else minecraft
+            srcDir(rootProject.file("src/resources_per_version/$recipesVersion/resources"))
         }
     }
 }
@@ -81,9 +81,15 @@ configurations.configureEach {
 }
 
 dependencies {
+    if (minecraft == "26.4-pre-2") {
+        val basicMath = "me.shedaniel.cloth:basic-math:0.6.1"
+        implementation(basicMath)
+        add("include", basicMath)
+    }
     modstitch.loom {
         modstitchModImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric-api")}")
-        modstitchModImplementation("com.terraformersmc:modmenu:${property("modmenu_version")}")
+        val modMenu = "com.terraformersmc:modmenu:${property("modmenu_version")}"
+        if (minecraft == "26.4-pre-2") modstitchModCompileOnly(modMenu) else modstitchModImplementation(modMenu)
 
     }
     val loaderSuffix = when {
@@ -92,9 +98,9 @@ dependencies {
         else -> "forge"
     }
 
-    modstitchModApi("me.shedaniel.cloth:cloth-config-$loaderSuffix:${property("cloth_config_version")}") {
-        if (modstitch.isLoom) {
-            exclude(group = "net.fabricmc.fabric-api")
+    prop("cloth_config_version") { version ->
+        modstitchModApi("me.shedaniel.cloth:cloth-config-$loaderSuffix:$version") {
+            if (modstitch.isLoom) exclude(group = "net.fabricmc.fabric-api")
         }
     }
     val rtreeVersion=property("rtree_version")
@@ -163,7 +169,13 @@ modstitch {
             // You can put any other replacement properties/metadata here that
             // modstitch doesn't initially support. Some examples below.
             put("mod_issue_tracker", "https://github.com/nicguzzo/wands/issues")
-            put("cloth_config_version", property("cloth_config_version").toString())
+            val clothVersion = findProperty("cloth_config_version") as? String
+            put("cloth_config_version", clothVersion.orEmpty())
+            put("fabric_dependencies", if (minecraft == "26.4-pre-2") {
+                """{"minecraft":"26.4-pre.2","fabric-api":"*","fabricloader":">=0.20.1"}"""
+            } else {
+                """{"cloth-config":">=$clothVersion"}"""
+            })
             val claimApiVersions = listOf("yawp", "cadmus", "factions").mapNotNull { id ->
                 (findProperty("${id}_min") as? String)?.let { id to it }
             }
@@ -188,6 +200,7 @@ modstitch {
                 "26.1.2" -> "[26.1.2,)"
                 "26.2" -> "[26.2,)"
                 "26.3" -> "[26.3,)"
+                "26.4-pre-2" -> "[26.4-pre-2]"
                 else -> throw IllegalArgumentException("Please set mc range version for ${property("deps.minecraft")} in build.gradle.kts")
             })
             put("forge_version_range", when (property("deps.minecraft")) {
@@ -196,7 +209,7 @@ modstitch {
                 "1.21.11" -> ""
                 "26.1.2" -> ""
                 "26.2" -> ""
-                "26.3" -> ""
+                "26.3", "26.4-pre-2" -> ""
                 else -> throw IllegalArgumentException("Please set forge version for ${property("deps.minecraft")} in build.gradle.kts")
             })
 
@@ -207,6 +220,7 @@ modstitch {
                 "26.1.2" -> 84
                 "26.2" -> 88
                 "26.3" -> 97
+                "26.4-pre-2" -> 104
                 else -> throw IllegalArgumentException("Please store the resource pack version for ${property("deps.minecraft")} in build.gradle.kts! https://minecraft.wiki/w/Pack_format")
             }.toString())
         }
@@ -216,7 +230,7 @@ modstitch {
     loom {
         // It's not recommended to store the Fabric Loader version in properties.
         // Make sure its up to date.
-        fabricLoaderVersion = "0.19.2"
+        fabricLoaderVersion = if (minecraft == "26.4-pre-2") "0.20.1" else "0.19.2"
 
         // Configure loom like normal in this block.
         configureLoom {

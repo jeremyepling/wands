@@ -4,7 +4,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
-import net.minecraft.world.level.material.Fluids;
 import net.nicguzzo.wands.compat.Compat;
 import net.nicguzzo.wands.items.BlueprintItem;
 import net.nicguzzo.wands.items.MagicBagItem;
@@ -60,7 +59,7 @@ public class InventoryManager {
                 }
             } else {
                 Item item = stack_item.getItem();
-                if (item == Fluids.LAVA.getBucket() || item == Items.POWDER_SNOW_BUCKET) {
+                if (item == Items.LAVA_BUCKET || item == Items.POWDER_SNOW_BUCKET) {
                     pa.placed--;
                     return Items.BUCKET.getDefaultInstance();
                 } else {

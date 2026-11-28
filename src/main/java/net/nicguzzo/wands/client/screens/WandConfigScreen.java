@@ -1,7 +1,9 @@
 package net.nicguzzo.wands.client.screens;
+//? if >=26.4 {
+/*import net.nicguzzo.wands.client.screens.NativeConfigScreen.ConfigBuilder;
+*///?} else {
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
-import me.shedaniel.clothconfig2.api.ConfigCategory;
-import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+//?}
 import me.shedaniel.math.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -24,9 +26,9 @@ public class WandConfigScreen {
         });
         ServerData srv = Minecraft.getInstance().getCurrentServer();
 
-        ConfigCategory general = builder.getOrCreateCategory(Compat.translatable("category.wands.general"));
-        ConfigCategory preview = builder.getOrCreateCategory(Compat.translatable("category.wands.preview"));
-        ConfigEntryBuilder entryBuilder = builder.entryBuilder();
+        var general = builder.getOrCreateCategory(Compat.translatable("category.wands.general"));
+        var preview = builder.getOrCreateCategory(Compat.translatable("category.wands.preview"));
+        var entryBuilder = builder.entryBuilder();
 
         if (srv == null)
         {

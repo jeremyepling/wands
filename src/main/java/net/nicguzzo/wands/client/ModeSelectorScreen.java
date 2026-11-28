@@ -245,7 +245,13 @@ public class ModeSelectorScreen extends Screen {
 
     @Override
     //?if >=26.1{
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
+    //?}
     //?}else{
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
     *///?}
@@ -340,7 +346,11 @@ public class ModeSelectorScreen extends Screen {
         gui.text(font, hint, panelX + (panelW - hintW) / 2, hintY, COLOR_HINT_TEXT);
 
         // Finger cursor only over enabled tiles
-        //?if < 26.3 {
+        //?if >= 26.4-pre-2 {
+        /*if (highlightedSlot >= 0) {
+            gui.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.POINTING_HAND);
+        }
+        *///?} else if < 26.3 {
         GLFW.glfwSetCursor(Compat.getWindow(), highlightedSlot >= 0 ? pointingHandCursor : 0);
         //?} else {
         /*if (highlightedSlot >= 0) {
@@ -362,7 +372,7 @@ public class ModeSelectorScreen extends Screen {
     public void onClose() {
         //?if < 26.3 {
         GLFW.glfwSetCursor(Compat.getWindow(), 0);
-        //?} else {
+        //?} else if < 26.4-pre-2 {
         /*com.mojang.blaze3d.platform.cursor.CursorTypes.ARROW.select();
         *///?}
         resetHold();

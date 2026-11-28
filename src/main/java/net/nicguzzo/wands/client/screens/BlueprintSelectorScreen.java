@@ -147,8 +147,15 @@ public class BlueprintSelectorScreen extends Screen {
 
     @Override
     //?if >= 26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        super.extractBackground(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
         super.extractBackground(gui, mouseX, mouseY, delta);
+    //?}
     //?} else {
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta) {
         super.render(gui, mouseX, mouseY, delta);

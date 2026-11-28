@@ -155,10 +155,17 @@ public class WandScreen extends Screen {
     //?if < 26.3 {
     private static long handCursor = 0;
     //?}
+    //?if < 26.4-pre-2 {
     private boolean isHandCursor = false;
+    //?}
 
-    private void updateCursor(int mouseX, int mouseY) {
+    private void updateCursor(GuiGraphicsExtractor gui, int mouseX, int mouseY) {
         boolean shouldBeHand = isOverClickable(mouseX, mouseY);
+        //?if >= 26.4-pre-2 {
+        /*if (shouldBeHand) {
+            gui.requestCursor(com.mojang.blaze3d.platform.cursor.CursorTypes.POINTING_HAND);
+        }
+        *///?} else {
         if (shouldBeHand != isHandCursor) {
             isHandCursor = shouldBeHand;
             //?if < 26.3 {
@@ -179,6 +186,7 @@ public class WandScreen extends Screen {
             }
             *///?}
         }
+        //?}
     }
 
     private boolean isOverClickable(int mx, int my) {
@@ -1073,8 +1081,15 @@ public class WandScreen extends Screen {
     }
     @Override
     //?if >=26.1 {
+    //?if >= 26.4-pre-2 {
+    /*public void extractBackground(GuiGraphicsExtractor gui) {
+        super.extractBackground(gui);
+        int mouseX = gui.mouseX();
+        int mouseY = gui.mouseY();
+    *///?} else {
     public void extractBackground(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.extractBackground(gui, mouseX, mouseY, delta);
+    //?}
     //?}else{
     /*public void render(GuiGraphicsExtractor gui, int mouseX, int mouseY, float delta){
         super.render(gui, mouseX, mouseY, delta);
@@ -1114,7 +1129,7 @@ public class WandScreen extends Screen {
         }
 
         // Update cursor based on hover
-        updateCursor(mouseX, mouseY);
+        updateCursor(gui, mouseX, mouseY);
     }
 
     @Override
@@ -1129,7 +1144,7 @@ public class WandScreen extends Screen {
             GLFW.glfwDestroyCursor(handCursor);
             handCursor = 0;
         }
-        //?} else {
+        //?} else if < 26.4-pre-2 {
         /*if (isHandCursor) {
             com.mojang.blaze3d.platform.cursor.CursorTypes.ARROW.select();
             isHandCursor = false;

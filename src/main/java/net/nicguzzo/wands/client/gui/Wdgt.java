@@ -195,7 +195,11 @@ public abstract class Wdgt {
      */
     protected void playClickSound() {
         Minecraft.getInstance().getSoundManager().play(
+            //?if >= 26.4-pre-2 {
+            /*SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F, 1.0F));
+            *///?} else {
             SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F, 1.0F));
+            //?}
     }
 
 }

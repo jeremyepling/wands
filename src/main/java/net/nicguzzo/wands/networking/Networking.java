@@ -192,7 +192,11 @@ public class Networking {
     public record PlayerDataPacket(CompoundTag tag) implements CustomPacketPayload {
         public static final CustomPacketPayload.Type<PlayerDataPacket> TYPE = new CustomPacketPayload.Type<>(PLAYER_DATA_PACKET.id());
         public static final StreamCodec<RegistryFriendlyByteBuf, PlayerDataPacket> STREAM_CODEC = StreamCodec.composite(
+                //? if >=26.4 {
+                /*ByteBufCodecs.fromCodec(CompoundTag.CODEC, net.minecraft.nbt.NbtAccounter::defaultQuota),
+                *///? } else {
                 ByteBufCodecs.fromCodec(CompoundTag.CODEC),
+                //? }
                 PlayerDataPacket::tag,
                 PlayerDataPacket::new
         );

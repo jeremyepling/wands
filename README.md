@@ -8,6 +8,8 @@ Powerful building, mining, and terraforming tools for Minecraft.
 
 **Supported platforms:** Forge (1.20.1) · Fabric (1.20.1, 1.21.1, 1.21.11, 26.1.2, 26.2, 26.3) · NeoForge (1.21.1, 1.21.11, 26.1.2, 26.2, 26.3) · Quilt (via Fabric)
 
+**26.4 preview:** This branch targets Minecraft Java Edition `26.4-pre-2` with Fabric Loader `0.20.1` and Fabric API `0.167.1+26.4`. Build it with `./gradlew :26.4-pre-2-fabric:build`. Open settings from the wand screen. This preview uses vanilla config widgets and runs without Cloth Config. NeoForge support awaits a 26.4 loader release.
+
 ## Shader Note
 
 If the preview doesn't show when using shaders, set `"render_last": true` in your config.

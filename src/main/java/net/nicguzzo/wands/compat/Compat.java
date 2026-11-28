@@ -30,7 +30,11 @@ import net.minecraft.world.item.component.ItemContainerContents;
     import net.minecraft.util.ProblemReporter;
     import net.minecraft.world.level.storage.TagValueInput;
     import net.minecraft.world.level.storage.TagValueOutput;
+    //? if >=26.4 {
+    /*import net.minecraft.client.gui.GuiPipeline;
+    *///? } else {
     import net.minecraft.client.renderer.RenderPipelines;
+    //? }
     //?}
 //?}
 
@@ -475,6 +479,18 @@ public class Compat {
         //? }
     }
 
+    public static void playBlockSound(Level level, Player player, net.minecraft.core.BlockPos pos, BlockState state, boolean breaking) {
+        //? if >=26.4 {
+        /*var sounds = state.getSounds(level);
+        (breaking ? sounds.breakSound() : sounds.placeSound()).ifPresent(sound ->
+                level.playSound(player, pos, sound, net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f));
+        *///? } else {
+        var sounds = state.getSoundType();
+        level.playSound(player, pos, breaking ? sounds.getBreakSound() : sounds.getPlaceSound(),
+                net.minecraft.sounds.SoundSource.BLOCKS, 1.0f, 1.0f);
+        //? }
+    }
+
     static public void blit(GuiGraphicsExtractor gui, RcId tx, int x, int y, float u, float v, int w, int h, int tex_w, int tex_h) {
         //? if < 1.20 {
         /*
@@ -482,7 +498,11 @@ public class Compat {
         */
         //? } else {
             //? if >= 1.21.11 {
+                //? if >=26.4 {
+                /*gui.blit(GuiPipeline.TEXTURED, tx.id(), x, y, u, v, w, h, tex_w, tex_h);
+                *///? } else {
                 gui.blit(RenderPipelines.GUI_TEXTURED, tx.id(), x, y, u, v, w, h, tex_w, tex_h);
+                //? }
             //? } else {
 
                 /*//? if >= 1.21.2 {
