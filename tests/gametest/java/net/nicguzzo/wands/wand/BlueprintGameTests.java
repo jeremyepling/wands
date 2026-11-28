@@ -22,6 +22,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.phys.Vec3;
@@ -80,6 +81,47 @@ public class BlueprintGameTests implements FabricGameTest {
     @GameTest(template = EMPTY_STRUCTURE)
     public void destroyResumesPastTheWandLimit(GameTestHelper test) {
         checkTierLimitedPaste(test, WandProps.Action.DESTROY, Blocks.STONE, Blocks.AIR);
+        test.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void destroyResumesPastWaterLeftByWaterloggedBlocks(GameTestHelper test) {
+        ServerPlayer player = player(test, GameType.CREATIVE);
+        BlockPos origin = new BlockPos(2, 2, 2);
+        var waterloggedSlab = Blocks.STONE_SLAB.defaultBlockState().setValue(SlabBlock.WATERLOGGED, true);
+        var stone = Blocks.STONE.defaultBlockState();
+        ItemStack blueprint = blank();
+        BlueprintItem.saveCopyBufferToBlueprint(blueprint, List.of(
+                new CopyBuffer(BlockPos.ZERO, waterloggedSlab),
+                new CopyBuffer(new BlockPos(1, 0, 0), waterloggedSlab),
+                new CopyBuffer(new BlockPos(2, 0, 0), stone),
+                new CopyBuffer(new BlockPos(3, 0, 0), stone)));
+        test.setBlock(origin, waterloggedSlab);
+        test.setBlock(origin.east(), waterloggedSlab);
+        test.setBlock(origin.east(2), stone);
+        test.setBlock(origin.east(3), stone);
+        player.getInventory().setItem(2, blueprint);
+        action(player, 3, BlueprintItem.getId(blueprint), "");
+
+        WandItem stoneWand = (WandItem) BuiltInRegistries.ITEM.get(WandsMod.stone_wand_id.id());
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(stoneWand));
+        int previousLimit = stoneWand.limit;
+        try {
+            stoneWand.limit = 2;
+            paste(test, player, origin, WandProps.Action.DESTROY);
+            test.assertBlockPresent(Blocks.WATER, origin);
+            test.assertBlockPresent(Blocks.WATER, origin.east());
+            test.assertBlockPresent(Blocks.STONE, origin.east(2));
+            test.assertBlockPresent(Blocks.STONE, origin.east(3));
+
+            paste(test, player, origin, WandProps.Action.DESTROY);
+            test.assertBlockPresent(Blocks.WATER, origin);
+            test.assertBlockPresent(Blocks.WATER, origin.east());
+            test.assertBlockPresent(Blocks.AIR, origin.east(2));
+            test.assertBlockPresent(Blocks.AIR, origin.east(3));
+        } finally {
+            stoneWand.limit = previousLimit;
+        }
         test.succeed();
     }
 
