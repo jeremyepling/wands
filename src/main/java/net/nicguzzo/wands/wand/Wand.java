@@ -49,6 +49,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.material.Fluids;
@@ -1057,8 +1058,23 @@ public class Wand {
     }
 
     private void recordUndo(BlockPos pos, BlockSnapshot before) {
-        if (before != null) undoManager.record(pos, before, BlockSnapshot.capture(level, pos),
-                WandProps.getAction(wand_stack).toString(), mode.toString());
+        if (before != null) recordUndo(pos, before, null, null);
+    }
+
+    private void recordUndo(BlockPos pos, BlockSnapshot before, BlockPos partnerPos, BlockSnapshot partnerBefore) {
+        var block = new UndoManager.Edit(pos, before, BlockSnapshot.capture(level, pos));
+        var doorPartner = partnerPos == null ? null
+                : new UndoManager.Edit(partnerPos, partnerBefore, BlockSnapshot.capture(level, partnerPos));
+        undoManager.record(block, doorPartner, WandProps.getAction(wand_stack).toString(), mode.toString());
+    }
+
+    private BlockPos doorPartnerForEdit(BlockPos pos, BlockState before, BlockState target) {
+        if (target.getBlock() instanceof DoorBlock) return pos.above();
+        if (!(before.getBlock() instanceof DoorBlock)) return null;
+        DoubleBlockHalf half = before.getValue(DoorBlock.HALF);
+        BlockPos partner = half == DoubleBlockHalf.LOWER ? pos.above() : pos.below();
+        BlockState other = level.getBlockState(partner);
+        return other.is(before.getBlock()) && other.getValue(DoorBlock.HALF) != half ? partner : null;
     }
 
     public void validate_buffer() {
@@ -1357,18 +1373,23 @@ public class Wand {
         if (creative) {
             BlockSnapshot before = BlockSnapshot.capture(level, block_pos);
             if (destroy) {
-                if (before.state().isAir() || !before.changeState(level, block_pos,
-                        level.getFluidState(block_pos).createLegacyBlock())) return false;
-                player.awardStat(Stats.BLOCK_MINED.get(before.state().getBlock()));
-                player.causeFoodExhaustion(0.005F);
+                if (before.state().isAir()) return false;
+                state = level.getFluidState(block_pos).createLegacyBlock();
             } else {
                 if (use) return false;
                 state = multipartPlacement != null ? multipartPlacement : state_for_placement(state, block_pos);
-                if (state == null || !state.canSurvive(level, block_pos)
-                        || !before.changeState(level, block_pos, state)) return false;
+                if (state == null || !state.canSurvive(level, block_pos)) return false;
+            }
+            BlockPos doorPartner = doorPartnerForEdit(block_pos, before.state(), state);
+            BlockSnapshot partnerBefore = doorPartner == null ? null : BlockSnapshot.capture(level, doorPartner);
+            if (!before.changeState(level, block_pos, state)) return false;
+            if (destroy) {
+                player.awardStat(Stats.BLOCK_MINED.get(before.state().getBlock()));
+                player.causeFoodExhaustion(0.005F);
+            } else {
                 state.getBlock().setPlacedBy(level, block_pos, state, player, state.getBlock().asItem().getDefaultInstance());
             }
-            recordUndo(block_pos, before);
+            recordUndo(block_pos, before, doorPartner, partnerBefore);
             return true;
         }
 
