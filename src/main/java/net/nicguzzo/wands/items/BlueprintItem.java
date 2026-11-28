@@ -144,8 +144,12 @@ public class BlueprintItem extends Item {
         if (stack == null || stack.isEmpty() || !(stack.getItem() instanceof BlueprintItem)) {
             return new CompoundTag();
         }
+        //?if >= 1.20.5 {
         CompoundTag root = Compat.getTags(stack);
-        return Compat.getCompound(root, TAG_BLUEPRINT).orElseGet(CompoundTag::new);
+        //?} else {
+        /*CompoundTag root = stack.getTag();
+        *///?}
+        return root == null ? new CompoundTag() : Compat.getCompound(root, TAG_BLUEPRINT).orElseGet(CompoundTag::new);
     }
 
     public static void saveBlueprintTag(ItemStack stack, CompoundTag bpTag) {
