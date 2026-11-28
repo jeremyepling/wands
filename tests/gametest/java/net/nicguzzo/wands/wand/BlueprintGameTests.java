@@ -1,5 +1,8 @@
 package net.nicguzzo.wands.wand;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +12,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +23,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.StairBlock;
+import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.phys.Vec3;
 import net.nicguzzo.wands.WandsMod;
 import net.nicguzzo.wands.compat.Compat;
@@ -239,17 +245,80 @@ public class BlueprintGameTests implements FabricGameTest {
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
-    public void blueprintPreservesOffsetsBeyond511Blocks(GameTestHelper test) {
+    public void denseBlueprintPreservesOffsetsAcrossSignedPackingBoundaries(GameTestHelper test) {
         ItemStack blueprint = blank();
-        BlockPos edge = new BlockPos(511, 0, 0);
-        BlockPos beyond = new BlockPos(512, 0, 0);
-        BlueprintItem.saveCopyBufferToBlueprint(blueprint, List.of(
-                new CopyBuffer(edge, Blocks.STONE.defaultBlockState()),
-                new CopyBuffer(beyond, Blocks.GLASS.defaultBlockState())));
-        var restored = BlueprintItem.getCopyBuffer(blueprint);
-        test.assertTrue(restored.size() == 2 && restored.get(0).pos.equals(edge), "Offset +511 failed to round-trip");
-        test.assertTrue(restored.get(1).pos.equals(beyond), "Expected +512 after save, got " + restored.get(1).pos.getX());
+        List<CopyBuffer> dense = new ArrayList<>();
+        for (int x = -513; x <= 512; x++) {
+            Block block = x < 0 ? Blocks.STONE : Blocks.GLASS;
+            dense.add(new CopyBuffer(new BlockPos(x, 0, 0), block.defaultBlockState()));
+        }
+        BlueprintItem.saveCopyBufferToBlueprint(blueprint, dense);
+        assertSavedLayout(test, blueprint, dense, new int[]{1026, 1, 1});
         test.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void sparseBlueprintPreservesExactOffsetsAndGaps(GameTestHelper test) {
+        ItemStack blueprint = blank();
+        List<CopyBuffer> sparse = List.of(
+                new CopyBuffer(new BlockPos(-513, -513, -513), Blocks.STONE.defaultBlockState()),
+                new CopyBuffer(BlockPos.ZERO, Blocks.COPPER_BLOCK.defaultBlockState()),
+                new CopyBuffer(new BlockPos(512, 512, 512), Blocks.GLASS.defaultBlockState()));
+        BlueprintItem.saveCopyBufferToBlueprint(blueprint, sparse);
+        assertSavedLayout(test, blueprint, sparse, new int[]{1026, 1026, 1026});
+        test.succeed();
+    }
+
+    private void assertSavedLayout(GameTestHelper test, ItemStack stack, List<CopyBuffer> expected, int[] dimensions) {
+        var registries = test.getLevel().registryAccess();
+        ItemStack reloaded = ItemStack.parse(registries, stack.save(registries)).orElseThrow();
+        List<CopyBuffer> restored = BlueprintItem.getCopyBuffer(reloaded);
+        test.assertTrue(BlueprintItem.getTotalBlockCount(reloaded) == expected.size() && restored.size() == expected.size(),
+                "Expected " + expected.size() + " cells, decoded " + restored.size());
+        test.assertTrue(Arrays.equals(BlueprintItem.getDimensions(reloaded), dimensions), "Incorrect bounding dimensions");
+        for (int index = 0; index < expected.size(); index++) {
+            CopyBuffer cell = expected.get(index);
+            CopyBuffer actual = restored.get(index);
+            test.assertTrue(cell.pos.equals(actual.pos) && cell.state.equals(actual.state),
+                    "Expected " + cell.state + " at " + cell.pos + ", decoded " + actual.state + " at " + actual.pos);
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void packedBlueprintFrom26_2KeepsBothPaletteFormatsAndOrientation(GameTestHelper test) throws Exception {
+        CompoundTag legacy;
+        try (InputStream fixture = BlueprintGameTests.class.getResourceAsStream("/wands-tests/blueprint-26.2.snbt")) {
+            if (fixture == null) throw new IOException("Missing saved 26.2 blueprint fixture");
+            legacy = TagParser.parseTag(new String(fixture.readAllBytes(), StandardCharsets.UTF_8));
+        }
+        assertCapturedLayout(test, legacy, "26.2");
+
+        CompoundTag modern = legacy.copy();
+        var palette = modern.getCompound("components").getCompound("minecraft:custom_data")
+                .getCompound("Blueprint").getList("States", 10);
+        for (int index = 0; index < palette.size(); index++) {
+            CompoundTag state = palette.getCompound(index);
+            state.put("id", state.get("Name"));
+            state.remove("Name");
+            if (state.contains("Properties")) {
+                state.put("properties", state.get("Properties"));
+                state.remove("Properties");
+            }
+        }
+        assertCapturedLayout(test, modern, "modern");
+        test.succeed();
+    }
+
+    private void assertCapturedLayout(GameTestHelper test, CompoundTag item, String format) {
+        ItemStack stack = ItemStack.parse(test.getLevel().registryAccess(), item).orElseThrow();
+        test.assertTrue("bac84b51-7ba3-40af-983b-a33b1c047817".equals(BlueprintItem.getId(stack))
+                && "Bridge test".equals(BlueprintItem.getBlueprintName(stack)), format + " item identity changed");
+        test.assertTrue(BlueprintItem.getReplacements(stack).get(Blocks.OAK_STAIRS) == Blocks.SPRUCE_STAIRS,
+                format + " replacement is missing");
+        assertSavedLayout(test, stack, List.of(
+                new CopyBuffer(BlockPos.ZERO, Blocks.SPRUCE_STAIRS.defaultBlockState()
+                        .setValue(StairBlock.FACING, Direction.EAST).setValue(StairBlock.HALF, Half.TOP)),
+                new CopyBuffer(new BlockPos(-2, 1, 3), Blocks.COPPER_BLOCK.defaultBlockState())), new int[]{3, 2, 4});
     }
 
     @GameTest(template = EMPTY_STRUCTURE)
@@ -260,12 +329,23 @@ public class BlueprintGameTests implements FabricGameTest {
         copy(test, player, source, source);
         ItemStack blueprint = blank();
         player.getInventory().setItem(2, blueprint);
-        ItemStack clientSynchronizedCopy = blueprint.copy();
-        // The selector discovers an unassigned ID on its local inventory copy before sending the action.
-        String selected = BlueprintItem.getOrCreateId(clientSynchronizedCopy);
+        InventoryManager.findBlueprints(player);
+        test.assertTrue(BlueprintItem.getId(blueprint).isEmpty(), "Inventory discovery assigned an ID before selector open");
+        action(player, 6, "", "");
+        String selected = BlueprintItem.getId(player.getInventory().getItem(2));
+        test.assertTrue(!selected.isEmpty(), "Selector open failed to assign an ID on the server");
+
+        ItemStack swapped = blank();
+        player.getInventory().setItem(2, swapped);
         action(player, 4, selected, "");
+        test.assertTrue(BlueprintItem.getId(swapped).isEmpty() && BlueprintItem.isEmptyBlueprint(swapped),
+                "A stale selector ID wrote into a different blank blueprint");
+
+        player.getInventory().setItem(2, blueprint);
+        ItemStack clientSynchronizedCopy = player.getInventory().getItem(2).copy();
+        action(player, 4, BlueprintItem.getId(clientSynchronizedCopy), "");
         test.assertTrue(BlueprintItem.getTotalBlockCount(blueprint) == 1,
-                "Saving by the client-assigned ID left the pristine server-side blueprint empty");
+                "Saving by the synchronized ID left the pristine server-side blueprint empty");
         test.succeed();
     }
 }
