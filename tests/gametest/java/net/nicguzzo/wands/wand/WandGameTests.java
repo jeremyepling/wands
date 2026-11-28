@@ -16,6 +16,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -374,6 +376,66 @@ public class WandGameTests implements FabricGameTest {
         menu.clicked(2, 0, net.minecraft.world.inventory.ClickType.QUICK_MOVE, player);
         test.assertTrue(MagicBagItem.getTotal(bag) == 2 && player.getInventory().getItem(2).isEmpty(),
                 "Shift-click failed to merge matching components");
+        test.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void survivalBlastChargesTntByRadius(GameTestHelper test) {
+        var player = player(test, GameType.SURVIVAL);
+        var stack = new ItemStack(BuiltInRegistries.ITEM.get(WandsMod.gold_wand_id.id()));
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        WandProps.switchMode(stack, WandProps.Mode.BLAST);
+        var blastTarget = target.above(10);
+        var pos = test.absolutePos(blastTarget);
+        player.setPos(pos.getX() + 20.5, pos.getY(), pos.getZ() + 0.5);
+
+        WandProps.setVal(stack, WandProps.Value.BLASTRAD, 5);
+        player.getInventory().setItem(2, new ItemStack(Items.TNT));
+        test.setBlock(blastTarget, Blocks.DIRT);
+        Networking.ReceivePosPacket(player, Direction.UP, true, false, pos, null, Vec3.atCenterOf(pos), 0);
+        test.assertBlockPresent(Blocks.DIRT, blastTarget);
+        test.assertTrue(player.getInventory().getItem(2).getCount() == 1, "A shortfall spent TNT");
+
+        var shulker = new ItemStack(Items.SHULKER_BOX);
+        var supplies = new ArrayList<>(java.util.Collections.nCopies(27, ItemStack.EMPTY));
+        supplies.set(0, new ItemStack(Items.TNT, 2));
+        shulker.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(supplies));
+        player.setItemInHand(InteractionHand.OFF_HAND, shulker);
+        Networking.ReceivePosPacket(player, Direction.UP, true, false, pos, null, Vec3.atCenterOf(pos), 0);
+        test.assertBlockPresent(Blocks.AIR, blastTarget);
+        test.assertTrue(Compat.get_shulker_contents(shulker).get(0).isEmpty()
+                && player.getInventory().getItem(2).getCount() == 1,
+                "Radius five should spend two TNT from the offhand shulker first");
+
+        WandProps.setVal(stack, WandProps.Value.BLASTRAD, 4);
+        test.setBlock(blastTarget, Blocks.DIRT);
+        Networking.ReceivePosPacket(player, Direction.UP, true, false, pos, null, Vec3.atCenterOf(pos), 0);
+        test.assertBlockPresent(Blocks.AIR, blastTarget);
+        test.assertTrue(player.getInventory().getItem(2).isEmpty(), "Radius four should spend one TNT");
+        test.succeed();
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void survivalMudRequiresTwoWaterBuckets(GameTestHelper test) {
+        var player = player(test, GameType.SURVIVAL);
+        var wand = new Wand();
+        var potion = PotionContents.createItemStack(Items.POTION, Potions.WATER);
+        var originalPotion = potion.copy();
+        player.setItemInHand(InteractionHand.OFF_HAND, potion);
+        player.getInventory().setItem(2, new ItemStack(Items.WATER_BUCKET));
+        test.setBlock(target, Blocks.DIRT);
+
+        fill(test, player, wand, WandProps.Action.USE);
+        test.assertBlockPresent(Blocks.DIRT, target);
+        test.assertTrue(player.getMainHandItem().getDamageValue() == 0, "Rejected mud conversion charged durability");
+
+        player.getInventory().setItem(3, new ItemStack(Items.WATER_BUCKET));
+        fill(test, player, wand, WandProps.Action.USE);
+        test.assertBlockPresent(Blocks.MUD, target);
+        test.assertTrue(player.getMainHandItem().getDamageValue() == 1, "Mud conversion should charge once");
+        test.assertTrue(player.getInventory().getItem(2).is(Items.WATER_BUCKET)
+                && player.getInventory().getItem(3).is(Items.WATER_BUCKET)
+                && ItemStack.matches(originalPotion, player.getOffhandItem()), "Mud conversion spent its renewable supplies");
         test.succeed();
     }
 

@@ -554,19 +554,16 @@ public class Wand {
             }
         }
         detect_bucket();
-        this.has_water_potion = false;
-        if (offhand != null && offhand.getItem() instanceof PotionItem) {
-
-            this.has_water_potion=WandUtils.hasWaterPotion(offhand);
-
-            if (!creative && has_water_potion) {
-                if (inventory.n_water_buckets_in_inventory < 2) {
-                    has_water_potion = false;
-                    if (!preview) {
-                        Compat.displayClientMessage(player,Compat.translatable("wands.message.need_water_buckets").withStyle(ChatFormatting.RED), false);
-                    }
-                    return;
+        has_water_potion = use && offhand != null && offhand.getItem() instanceof PotionItem
+                && WandUtils.hasWaterPotion(offhand);
+        if (!creative && ((has_water_bucket && mode != Mode.COPY) || has_water_potion)) {
+            inventory.n_water_buckets_in_inventory = inventory.countWaterBuckets();
+            if (has_water_potion && inventory.n_water_buckets_in_inventory < 2) {
+                has_water_potion = false;
+                if (!preview) {
+                    Compat.displayClientMessage(player,Compat.translatable("wands.message.need_water_buckets").withStyle(ChatFormatting.RED), false);
                 }
+                return;
             }
         }
         boolean has_torch = false;
@@ -648,11 +645,11 @@ public class Wand {
         int effectiveLimit = (mode == Mode.COPY) ? WandsConfig.max_limit : limit;
 
         if (!preview) {
-            boolean materialAction = !destroy && !use && mode != Mode.COPY;
-            if (materialAction && mode != Mode.BLAST) {
+            boolean materialAction = !destroy && !use && mode != Mode.COPY && mode != Mode.BLAST;
+            if (materialAction) {
                 preparePlacementMaterials(effectiveLimit);
             }
-            if (materialAction && !creative && !has_water_bucket && !has_empty_bucket) {
+            if (!creative && (mode == Mode.BLAST || (materialAction && !has_water_bucket && !has_empty_bucket))) {
                 inventory.accountMaterials(this, false);
                 block_accounting.forEach((item, count) -> {
                     if (count.needed > count.in_player) {
@@ -810,7 +807,6 @@ public class Wand {
                 this.use = false;
             }
         }
-        inventory.detect_water_bucket(this);
     }
 
     /** Maps bucket type to the corresponding block_state for preview and placement. */
