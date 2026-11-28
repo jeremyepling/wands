@@ -426,15 +426,18 @@ public class WandGameTests implements FabricGameTest {
         var originalPotion = potion.copy();
         player.setItemInHand(InteractionHand.OFF_HAND, potion);
         player.getInventory().setItem(2, new ItemStack(Items.WATER_BUCKET));
-        test.setBlock(target, Blocks.DIRT);
+        var dirt = target.east();
+        test.setBlock(target, Blocks.STONE);
+        test.setBlock(dirt, Blocks.DIRT);
 
-        fill(test, player, wand, WandProps.Action.USE);
-        test.assertBlockPresent(Blocks.DIRT, target);
+        fill(test, player, wand, WandProps.Action.USE, dirt);
+        test.assertBlockPresent(Blocks.DIRT, dirt);
         test.assertTrue(player.getMainHandItem().getDamageValue() == 0, "Rejected mud conversion charged durability");
 
         player.getInventory().setItem(3, new ItemStack(Items.WATER_BUCKET));
-        fill(test, player, wand, WandProps.Action.USE);
-        test.assertBlockPresent(Blocks.MUD, target);
+        fill(test, player, wand, WandProps.Action.USE, dirt);
+        test.assertBlockPresent(Blocks.STONE, target);
+        test.assertBlockPresent(Blocks.MUD, dirt);
         test.assertTrue(player.getMainHandItem().getDamageValue() == 1, "Mud conversion should charge once");
         test.assertTrue(player.getInventory().getItem(2).is(Items.WATER_BUCKET)
                 && player.getInventory().getItem(3).is(Items.WATER_BUCKET)

@@ -809,6 +809,14 @@ public class Wand {
         }
     }
 
+    private boolean canConvertToMud(BlockState state) {
+        //?if < 26.3 {
+        return use && has_water_potion && state.is(BlockTags.CONVERTABLE_TO_MUD);
+        //?} else {
+        /*return use && has_water_potion && state.is(BlockTags.CONVERTIBLE_TO_MUD);
+        *///?}
+    }
+
     /** Maps bucket type to the corresponding block_state for preview and placement. */
     private void setup_bucket_block_state() {
         if (has_bucket) {
@@ -1269,11 +1277,7 @@ public class Wand {
             return true;
         }
 
-        //?if < 26.3 {
-        if ((use) && has_water_potion && state.is(BlockTags.CONVERTABLE_TO_MUD)) {
-        //?} else {
-        /*if ((use) && has_water_potion && state.is(BlockTags.CONVERTIBLE_TO_MUD)) {
-        *///?}
+        if (canConvertToMud(st)) {
             BlockSnapshot before = creative ? BlockSnapshot.capture(level, block_pos) : null;
             BlockState mudState = Blocks.MUD.defaultBlockState();
             if (!level.setBlockAndUpdate(block_pos, mudState)) return false;
@@ -1470,7 +1474,7 @@ public class Wand {
                     if(use){
                         // Area mode adds offset positions (above surface), so check the actual target block
                         BlockState useTarget = (mode == Mode.AREA) ? level.getBlockState(tmp_pos.set(x, y, z).move(side, -1)) : st;
-                        if(can_destroy_or_use(useTarget,false) ||
+                        if (canConvertToMud(useTarget) || can_destroy_or_use(useTarget, false) ||
                            (creative && (WandUtils.has_use_action(useTarget) || can_shear(useTarget)))) {
                             return block_buffer.add(x, y, z, this, with_state);
                         // Set warning flags when block can't be used (mirrors place_block logic)
